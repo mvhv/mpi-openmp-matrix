@@ -102,7 +102,7 @@ void updateEntry(MatEntry *result, int *size, int i, int j, double value) {
 }
 
 int main(int argc, char **argv) {
-    MatEntry *matA, *matB, *reduced, *partial, *result;
+    MatEntry *matA, *matB, *reduced, *partial, *reduced, *result;
     char *pathA, *pathB;
     int sizeA, sizeB, rowsA, rowsB, colsA, colsB;
     int commRank, commSize, commWorkers, rc, provided;
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
 
         // reduce data from workers
         reducedSize = 0;
-        MatEntry reduced[reducedMax];
+        reduced = malloc(reducedMax * sizeof(reduced));
         for (int task = 0; task < commWorkers; task++) {
             for (int entry = 0; entry < taskResultSizes[task]; entry++) {
                 result = &taskResults[task][entry];
@@ -222,14 +222,14 @@ int main(int argc, char **argv) {
         MPI_Recv(matB, sizeB, MPI_MAT_ENTRY, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status);
 
         // target for worker reduction
-        MatEntry reduced[sizeA * sizeB];
+        reduced = malloc(sizeA * sizeB * sizeof(reduced));
         reducedSize = 0;
 
         // paralellise updates
         #pragma omp parallel 
         {
             // assign memory for thread
-            MatEntry partial[sizeA * sizeB];
+            MatEntry *partial = malloc(sizeA * sizeB * sizeof(reduced));
             int partialSize = 0;
 
             // compare all pairs of mat entries
