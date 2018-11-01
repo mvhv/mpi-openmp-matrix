@@ -226,11 +226,11 @@ int main(int argc, char **argv) {
         reducedSize = 0;
 
         // paralellise updates
-        #pragma omp parallel 
+        #pragma omp parallel shared(matA, sizeA, matB, sizeB, reduced, reducedSize) private(partial, partialSize)
         {
             // assign memory for thread
-            MatEntry *partial = malloc(sizeA * sizeB * sizeof(reduced));
-            int partialSize = 0;
+            partial = malloc(sizeA * sizeB * sizeof(reduced));
+            partialSize = 0;
 
             // compare all pairs of mat entries
             #pragma omp for
