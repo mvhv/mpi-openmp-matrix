@@ -177,10 +177,10 @@ int main(int argc, char **argv) {
 
         // prepare to store data from workers for later reduction
         int taskResultSizes[commWorkers];
-        MatEntry *taskResults[commWorkers];
-        int reducedMax = 0;
-        MatEntry *taskResult;
         int taskResultSize;
+        MatEntry *taskResults[commWorkers];
+        MatEntry *taskResult;
+        reducedMax = 0;
 
         // recieve data from workers
         for (int node = 1; node < commSize; node++) {
@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
 
         // reduce data from workers
         reducedSize = 0;
-        reduced = malloc(reducedMax * sizeof(*reduced));
+        MatEntry reduced[reducedMax];
         for (int task = 0; task < commWorkers; task++) {
             for (int entry = 0; entry < taskResultSizes[task]; entry++) {
                 result = &taskResults[task][entry];
@@ -226,23 +226,27 @@ int main(int argc, char **argv) {
         reducedSize = 0;
 
         // paralellise updates
-        #pragma omp parallel {
+        #pragma omp parallel 
+        {
             // malloc memory for thread
             MatEntry partial[sizeA * sizeB];
             int partialSize = 0;
 
             // compare all pairs of mat entries
             #pragma omp for
-            for (int a = 0; a < sizeA; a++) {
-                for (int b = 0; b < sizeB; b++) {
-                    if (matA[a].j == matB[b].i) {
-                        updateEntry(partial, &partialSize, matA[a].i, matB[b].j, matA[a].value * matB[b].value);
+            {
+                for (int a = 0; a < sizeA; a++) {
+                    for (int b = 0; b < sizeB; b++) {
+                        if (matA[a].j == matB[b].i) {
+                            updateEntry(partial, &partialSize, matA[a].i, matB[b].j, matA[a].value * matB[b].value);
+                        }
                     }
                 }
             }
 
             // concatenate private arrays
-            #pragma omp critical {
+            #pragma omp critical
+            {
                 for (int n = 0; n < partialSize; n++) {
                     updateEntry(reduced, &reducedSize, partial[n].i, partial[n].j, partial[n].value);
                 }
