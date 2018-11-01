@@ -72,7 +72,7 @@ MatEntry *loadMatrixFromFile(char *path, int *count) {
     length = countLines(fp);
 
     // allocate memory for matrix
-    matrix = malloc(length * sizeof(MatEntry));
+    matrix = malloc(length * sizeof(*matrix));
 
     // read file and record entries
     for (int n = 0; n < length; n++) {
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
 
         // reduce data from workers
         reducedSize = 0;
-        reduced = malloc(reducedMax * sizeof(reduced));
+        reduced = malloc(reducedMax * sizeof(*reduced));
         for (int task = 0; task < commWorkers; task++) {
             for (int entry = 0; entry < taskResultSizes[task]; entry++) {
                 result = &taskResults[task][entry];
@@ -223,14 +223,14 @@ int main(int argc, char **argv) {
         MPI_Recv(matB, sizeB, MPI_MAT_ENTRY, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status);
 
         // target for worker reduction
-        reduced = malloc(sizeA * sizeB * sizeof(reduced));
+        reduced = malloc(sizeA * sizeB * sizeof(*reduced));
         reducedSize = 0;
 
         // paralellise updates
         #pragma omp parallel shared(matA, sizeA, matB, sizeB, reduced, reducedSize) private(partial, partialSize)
         {
             // assign memory for thread
-            partial = malloc(sizeA * sizeB * sizeof(reduced));
+            partial = malloc(sizeA * sizeB * sizeof(*partial));
             partialSize = 0;
 
             // compare all pairs of mat entries
