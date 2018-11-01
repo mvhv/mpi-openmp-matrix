@@ -228,18 +228,16 @@ int main(int argc, char **argv) {
         // paralellise updates
         #pragma omp parallel 
         {
-            // malloc memory for thread
+            // assign memory for thread
             MatEntry partial[sizeA * sizeB];
             int partialSize = 0;
 
             // compare all pairs of mat entries
             #pragma omp for
-            {
-                for (int a = 0; a < sizeA; a++) {
-                    for (int b = 0; b < sizeB; b++) {
-                        if (matA[a].j == matB[b].i) {
-                            updateEntry(partial, &partialSize, matA[a].i, matB[b].j, matA[a].value * matB[b].value);
-                        }
+            for (int a = 0; a < sizeA; a++) {
+                for (int b = 0; b < sizeB; b++) {
+                    if (matA[a].j == matB[b].i) {
+                        updateEntry(partial, &partialSize, matA[a].i, matB[b].j, matA[a].value * matB[b].value);
                     }
                 }
             }
