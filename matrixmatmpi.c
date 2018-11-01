@@ -1,6 +1,7 @@
-#include <mpi.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <mpi.h>
+#include <omp.h>
 
 static const int MASTER = 0;
 static const int FROM_MASTER = 1;
@@ -220,22 +221,37 @@ int main(int argc, char **argv) {
         matB = malloc(sizeB * sizeof(*matB));
         MPI_Recv(matB, sizeB, MPI_MAT_ENTRY, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status);
 
-        // malloc memory for partial result
-        MatEntry *partial = malloc(sizeA * sizeB * sizeof(*partial));
-        int partialSize = 0;
+        // target for worker reduction
+        MatEntry reduced[sizeA * sizeB];
+        reducedSize = 0;
 
-        // compare all pairs of mat entries and sum to partial result
-        for (int a = 0; a < sizeA; a++) {
-            for (int b = 0; b < sizeB; b++) {
-                if (matA[a].j == matB[b].i) {
-                    updateEntry(partial, &partialSize, matA[a].i, matB[b].j, matA[a].value * matB[b].value);
+        // paralellise updates
+        #pragma omp parallel {
+            // malloc memory for thread
+            MatEntry partial[sizeA * sizeB];
+            int partialSize = 0;
+
+            // compare all pairs of mat entries
+            #pragma omp for
+            for (int a = 0; a < sizeA; a++) {
+                for (int b = 0; b < sizeB; b++) {
+                    if (matA[a].j == matB[b].i) {
+                        updateEntry(partial, &partialSize, matA[a].i, matB[b].j, matA[a].value * matB[b].value);
+                    }
+                }
+            }
+
+            // concatenate private arrays
+            #pragma omp critical {
+                for (int n = 0; n < partialSize; n++) {
+                    updateEntry(reduced, &reducedSize, partial[n].i, partial[n].j, partial[n].value);
                 }
             }
         }
 
         // send result to master
-        MPI_Send(&partialSize, 1, MPI_INT, MASTER, FROM_WORKER, MPI_COMM_WORLD);
-        MPI_Send(partial, partialSize, MPI_MAT_ENTRY, MASTER, FROM_WORKER, MPI_COMM_WORLD);
+        MPI_Send(&reducedSize, 1, MPI_INT, MASTER, FROM_WORKER, MPI_COMM_WORLD);
+        MPI_Send(reduced, reducedSize, MPI_MAT_ENTRY, MASTER, FROM_WORKER, MPI_COMM_WORLD);
     }
 
     MPI_Finalize();
