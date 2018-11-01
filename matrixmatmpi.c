@@ -102,7 +102,7 @@ void updateEntry(MatEntry *result, int *size, int i, int j, double value) {
 }
 
 int main(int argc, char **argv) {
-    MatEntry *matA, *matB, *reduced, *partial, *reduced, *result;
+    MatEntry *matA, *matB, *reduced, *partial, *result;
     char *pathA, *pathB;
     int sizeA, sizeB, rowsA, rowsB, colsA, colsB;
     int commRank, commSize, commWorkers, rc, provided;
