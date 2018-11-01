@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
     // override OpenMP dynamic thread allocation if provided
     if (argc == 4) {
         omp_set_dynamic(0);
-        omp_set_num_threads(atoi(argv[3]);
+        omp_set_num_threads(atoi(argv[3]));
     }
 
     if (commRank == MASTER) { // MASTER TASK ----------------------------------
