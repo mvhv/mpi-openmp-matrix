@@ -104,10 +104,11 @@ void updateEntry(MatEntry *result, int *size, int i, int j, double value) {
 int main(int argc, char **argv) {
     MatEntry *matA, *matB, *reduced, *partial, *result;
     char *pathA, *pathB;
-    int sizeA, sizeB, rowsA, rowsB, colsA, colsB;
+    int sizeA, sizeB;//, rowsA, rowsB, colsA, colsB;
     int commRank, commSize, commWorkers, rc, provided;
     int entriesPart, entriesExtra, entriesOffset, entries;
     int reducedSize, partialSize, reducedMax;
+    int numThreads;
     double value;
     MPI_Status status;
 
@@ -132,20 +133,20 @@ int main(int argc, char **argv) {
     MPI_Type_create_resized(tempType, lb, extent, &MPI_MAT_ENTRY);
     MPI_Type_commit(&MPI_MAT_ENTRY);
 
+    // set openMP environment
+    omp_set_dynamic(0);
+    omp_set_num_threads(1);
+
 
     if (commRank == MASTER) { // MASTER NODE --------------------------------------
         // parse args
-        if (argc != 7) {
-            printf("Expected 6 arguments, recieved %d\n", argc);
+        if (argc != 3) {
+            printf("Expected 3 arguments, recieved %d\n", argc-1);
             MPI_Abort(MPI_COMM_WORLD, rc);
             exit(EXIT_FAILURE);
         } else {
             pathA = argv[1];
-            rowsA = atoi(argv[2]);
-            colsA = atoi(argv[3]);
-            pathB = argv[4];
-            rowsA = atoi(argv[5]);
-            colsB = atoi(argv[6]);
+            pathB = argv[2];
         }
 
         // load and sort first matrix in row major order
