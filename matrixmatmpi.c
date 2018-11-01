@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
     // don't count the head node as a worker
     commWorkers = commSize - 1;
 
-    if (commWorkers < 2) {
+    if (commSize < 2) {
         printf("Require at least 2 MPI tasks. Exiting.\n");
         MPI_Abort(MPI_COMM_WORLD, rc);
         exit(EXIT_FAILURE);
