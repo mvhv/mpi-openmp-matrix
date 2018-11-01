@@ -119,6 +119,12 @@ int main(int argc, char **argv) {
     // don't count the head node as a worker
     commWorkers = commSize - 1;
 
+    if (commWorkers < 2) {
+        printf("Require at least 2 MPI tasks. Exiting.\n");
+        MPI_Abort(MPI_COMM_WORLD, rc);
+        exit(EXIT_FAILURE);
+    }
+
     // define MPI type for MatEntry structs
     int count = 3;
     int blocklengths[] = {1, 1, 1};
@@ -133,22 +139,24 @@ int main(int argc, char **argv) {
     MPI_Type_create_resized(tempType, lb, extent, &MPI_MAT_ENTRY);
     MPI_Type_commit(&MPI_MAT_ENTRY);
 
-    // set openMP environment
-    omp_set_dynamic(0);
-    omp_set_num_threads(1);
+    // override OpenMP dynamic thread allocation if provided
+    if (argc == 4) {
+        omp_set_dynamic(0);
+        omp_set_num_threads(atoi(argv[3]);
+    }
 
+    if (commRank == MASTER) { // MASTER TASK ----------------------------------
 
-    if (commRank == MASTER) { // MASTER NODE --------------------------------------
         // parse args
-        if (argc != 3) {
-            printf("Expected 3 arguments, recieved %d\n", argc-1);
-            MPI_Abort(MPI_COMM_WORLD, rc);
-            exit(EXIT_FAILURE);
-        } else {
+        if (argc > 2) {
             pathA = argv[1];
             pathB = argv[2];
+        } else {
+            printf("Unrecognised arguments.\nCorrect use:\nmpirun mmm matrixA matrixB [threadOverride]\n");
+            MPI_Abort(MPI_COMM_WORLD, rc);
+            exit(EXIT_FAILURE);
         }
-
+        
         // load and sort first matrix in row major order
         matA = loadMatrixFromFile(pathA, &sizeA);
         qsort(matA, sizeA, sizeof(*matA), compRowMajor);
@@ -211,6 +219,7 @@ int main(int argc, char **argv) {
             printf("%d %d %lf\n", reduced[n].i, reduced[n].j, reduced[n].value);
         }
     } else { // WORKER NODES --------------------------------------------------
+
         // recieve matA allocation size
         MPI_Recv(&sizeA, 1, MPI_INT, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status);
         // recieve matA allocation
