@@ -189,7 +189,7 @@ int main(int argc, char **argv) {
             taskResult = malloc(taskResultSize * sizeof(*taskResult));
             MPI_Recv(taskResult, taskResultSize, MPI_MAT_ENTRY, node, FROM_WORKER, MPI_COMM_WORLD, &status);
             taskResultSizes[node - 1] = taskResultSize;
-            taskResults[node - 1] = &taskResult;
+            taskResults[node - 1] = taskResult;
             reducedMax += taskResultSize;
         }
 
