@@ -101,7 +101,7 @@ void updateEntry(MatEntry *result, int *size, int i, int j, double value) {
 }
 
 int main(int argc, char **argv) {
-    MatEntry *matA, *matB, *reduced, *partial;
+    MatEntry *matA, *matB, *reduced, *partial, *result;
     char *pathA, *pathB;
     int sizeA, sizeB, rowsA, rowsB, colsA, colsB;
     int commRank, commSize, commWorkers, rc, provided;
@@ -178,6 +178,8 @@ int main(int argc, char **argv) {
         int taskResultSizes[commWorkers];
         MatEntry *taskResults[commWorkers];
         int reducedMax = 0;
+        MatEntry *taskResult;
+        int taskResultSize;
 
         // recieve data from workers
         for (int node = 1; node < commSize; node++) {
@@ -195,7 +197,7 @@ int main(int argc, char **argv) {
         reducedSize = 0;
         reduced = malloc(reducedMax * sizeof(*reduced));
         for (int task = 0; task < commWorkers; task++) {
-            for (int entry = 0; entry < taskResultSizes[task], entry++) {
+            for (int entry = 0; entry < taskResultSizes[task]; entry++) {
                 result = &taskResults[task][entry];
                 updateEntry(reduced, &reducedSize, result->i, result->j, result->value);
             }
@@ -219,7 +221,7 @@ int main(int argc, char **argv) {
         MPI_Recv(matB, sizeB, MPI_MAT_ENTRY, MASTER, FROM_MASTER, MPI_COMM_WORLD, &status);
 
         // malloc memory for partial result
-        MatEntry *partial = malloc(matA * matB * sizeof(*partial));
+        MatEntry *partial = malloc(sizeA * sizeB * sizeof(*partial));
         int partialSize = 0;
 
         // compare all pairs of mat entries and sum to partial result
@@ -236,7 +238,7 @@ int main(int argc, char **argv) {
         MPI_Send(partial, partialSize, MPI_MAT_ENTRY, MASTER, FROM_WORKER, MPI_COMM_WORLD);
     }
 
-    MPI_Finalise();
+    MPI_Finalize();
     return EXIT_SUCCESS;
 }
 
