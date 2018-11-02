@@ -243,7 +243,7 @@ int main(int argc, char **argv) {
             partialSize = 0;
 
             // compare all pairs of mat entries
-            #pragma omp for
+            #pragma omp for collapse(2)
             for (int a = 0; a < sizeA; a++) {
                 for (int b = 0; b < sizeB; b++) {
                     if (matA[a].j == matB[b].i) {
@@ -269,6 +269,3 @@ int main(int argc, char **argv) {
     MPI_Finalize();
     return EXIT_SUCCESS;
 }
-
-// A * B = C
-// Cij = Ai1 * B1j + Ai2 * B2j + ... + Ain * Bnj
